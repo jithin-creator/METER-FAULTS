@@ -1,0 +1,8 @@
+{
+  "appId": "com.jj.meterfaults",
+  "appName": "METER FAULTS",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  }
+}
