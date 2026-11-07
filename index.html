@@ -1,0 +1,617 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#101010">
+<title>METER FAULTS</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode"></script>
+
+<style>
+:root{
+--bg:#101010;
+--panel:#1c1b18;
+--gold:#d6ad52;
+--gold2:#f1d58a;
+--text:#fff8e8;
+--muted:#b9ad91;
+}
+*{box-sizing:border-box}
+body{
+margin:0;
+background:radial-gradient(circle at top,#382b18,#101010 65%);
+color:var(--text);
+font-family:Arial,sans-serif;
+}
+header{
+padding:18px;
+background:#15130f;
+border-bottom:2px solid var(--gold);
+display:flex;
+align-items:center;
+gap:12px;
+}
+.logo{
+font-size:32px;
+background:linear-gradient(135deg,#f1d58a,#9b6b19);
+padding:10px;
+border-radius:14px;
+}
+h1{color:var(--gold2);font-size:23px;margin:0}
+header small{color:var(--gold)}
+main{padding:14px;max-width:750px;margin:auto}
+.card{
+background:linear-gradient(145deg,#26231d,#171615);
+border:1px solid #66512b;
+border-radius:16px;
+padding:15px;
+margin-bottom:15px;
+}
+h2{color:var(--gold2);font-size:18px}
+label{
+display:block;
+color:var(--gold2);
+margin-top:12px;
+font-size:13px;
+}
+input,textarea,select{
+width:100%;
+padding:12px;
+margin-top:5px;
+background:#111;
+color:white;
+border:1px solid #80632d;
+border-radius:9px;
+font-size:15px;
+}
+textarea{min-height:75px}
+button{
+padding:12px;
+margin:5px 3px;
+border:1px solid var(--gold);
+border-radius:10px;
+background:linear-gradient(120deg,#302718,#171512);
+color:var(--gold2);
+font-weight:bold;
+font-size:14px;
+}
+button.primary{
+background:linear-gradient(120deg,#f1d58a,#a87521);
+color:#111;
+border:0;
+}
+button.danger{color:#ff9999}
+.tabs{
+display:flex;
+overflow:auto;
+gap:5px;
+margin-bottom:12px;
+}
+.tabs button{white-space:nowrap}
+.hidden{display:none!important}
+.item{
+padding:12px;
+background:#171512;
+border:1px solid #57472b;
+border-radius:12px;
+margin:10px 0;
+}
+.item h3{color:var(--gold2)}
+.status{font-weight:bold}
+.Received{color:#79c8ff}
+.Repair{color:#ffce69}
+.Ready{color:#69e6a0}
+img.photo{
+width:100%;
+max-height:240px;
+object-fit:contain;
+margin-top:8px;
+background:#080808;
+border-radius:10px;
+}
+#scanner{max-width:400px;margin:auto}
+.dialog{
+display:none;
+position:fixed;
+inset:0;
+background:#000d;
+z-index:10;
+padding:15px;
+align-items:center;
+justify-content:center;
+}
+.dialog.show{display:flex}
+.dialogbox{
+background:#211e18;
+border:1px solid var(--gold);
+border-radius:16px;
+padding:16px;
+width:100%;
+max-width:480px;
+max-height:90vh;
+overflow:auto;
+}
+small{color:var(--muted)}
+footer{
+text-align:center;
+padding:15px;
+color:var(--gold);
+font-size:12px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<div class="logo">⚙️</div>
+<div>
+<h1>METER FAULTS</h1>
+<small>JJ METER SERVICE</small>
+</div>
+</header>
+
+<main>
+
+<div class="tabs">
+<button onclick="tab('entry')">➕ New Job</button>
+<button onclick="tab('records')">📋 Records</button>
+<button onclick="tab('scannerPage')">▦ QR Scan</button>
+<button onclick="tab('backup')">💾 Backup</button>
+</div>
+
+<section id="entry">
+<div class="card">
+<h2>👤 Customer Details</h2>
+
+<label>Customer Name *</label>
+<input id="customer" placeholder="Customer name">
+
+<label>Phone Number *</label>
+<input id="phone" type="tel" placeholder="Mobile number">
+
+<label>Bike / Car Model</label>
+<input id="vehicle" placeholder="Vehicle model">
+
+<label>Date</label>
+<input id="jobdate" type="date">
+
+<label>Complaint / Faulty Components</label>
+<textarea id="complaint" placeholder="Enter meter complaint and component details"></textarea>
+
+<label>Repairing History</label>
+<textarea id="history" placeholder="Repair details and replaced components"></textarea>
+
+<label>Meter Status</label>
+<select id="status">
+<option>Received</option>
+<option>Repair</option>
+<option>Ready</option>
+</select>
+
+<label>Rack Location</label>
+<input id="rack" placeholder="Rack number">
+
+<h2>📷 Meter / PCB Photos</h2>
+<button onclick="document.getElementById('camera').click()">📸 Camera</button>
+<button onclick="document.getElementById('gallery').click()">🖼 Choose Files</button>
+
+<input hidden type="file" id="camera" accept="image/*" capture="environment">
+<input hidden type="file" id="gallery" accept="image/*" multiple>
+
+<div id="photos"></div>
+
+<button class="primary" onclick="save()">💾 SAVE CUSTOMER</button>
+<button onclick="clearForm()">CLEAR</button>
+</div>
+</section>
+
+<section id="records" class="hidden">
+<div class="card">
+<h2>📋 Customer Records</h2>
+<input id="search" placeholder="Search customer / phone / vehicle" oninput="render()">
+<div id="list"></div>
+</div>
+</section>
+
+<section id="scannerPage" class="hidden">
+<div class="card">
+<h2>▦ QR Scanner</h2>
+<p><small>Camera permission is required.</small></p>
+<button class="primary" onclick="startScan()">START SCANNER</button>
+<button onclick="stopScan()">STOP</button>
+<div id="scanner"></div>
+<div id="scanResult"></div>
+</div>
+</section>
+
+<section id="backup" class="hidden">
+<div class="card">
+<h2>💾 Data Backup</h2>
+<button class="primary" onclick="backup()">DOWNLOAD BACKUP</button>
+<button onclick="document.getElementById('restore').click()">RESTORE BACKUP</button>
+<input hidden type="file" id="restore" accept=".json">
+<p id="backupMessage"></p>
+</div>
+</section>
+
+</main>
+
+<div class="dialog" id="dialog">
+<div class="dialogbox">
+<button onclick="closeDialog()">✖ CLOSE</button>
+<div id="dialogContent"></div>
+</div>
+</div>
+
+<footer>JJ METER SERVICE • METER FAULTS</footer>
+
+<script>
+const DB='METER_FAULTS_DB';
+let database;
+let photos=[];
+let editing=null;
+let scanner=null;
+
+const $=id=>document.getElementById(id);
+
+function initDB(){
+return new Promise((resolve,reject)=>{
+let r=indexedDB.open(DB,1);
+r.onupgradeneeded=()=>{
+r.result.createObjectStore('jobs',{keyPath:'id'});
+};
+r.onsuccess=()=>{
+database=r.result;
+resolve();
+};
+r.onerror=()=>reject(r.error);
+});
+}
+
+function all(){
+return new Promise((resolve,reject)=>{
+let r=database.transaction('jobs').objectStore('jobs').getAll();
+r.onsuccess=()=>resolve(r.result);
+r.onerror=()=>reject(r.error);
+});
+}
+
+function put(data){
+return new Promise((resolve,reject)=>{
+let r=database.transaction('jobs','readwrite').objectStore('jobs').put(data);
+r.onsuccess=resolve;
+r.onerror=()=>reject(r.error);
+});
+}
+
+function remove(id){
+return new Promise(resolve=>{
+let r=database.transaction('jobs','readwrite').objectStore('jobs').delete(id);
+r.onsuccess=resolve;
+});
+}
+
+function tab(id){
+document.querySelectorAll('main section').forEach(s=>s.classList.add('hidden'));
+$(id).classList.remove('hidden');
+if(id==='records')render();
+}
+
+function uid(){
+return 'MF'+Date.now().toString(36).toUpperCase();
+}
+
+function today(){
+$('jobdate').value=new Date().toISOString().slice(0,10);
+}
+
+function readImage(file){
+return new Promise((resolve,reject)=>{
+let reader=new FileReader();
+reader.onload=()=>resolve(reader.result);
+reader.onerror=reject;
+reader.readAsDataURL(file);
+});
+}
+
+async function addPhotos(files){
+for(let f of files){
+if(f.type.startsWith('image/')){
+photos.push({
+data:await readImage(f),
+name:f.name,
+rotation:0
+});
+}
+}
+showPhotos();
+}
+
+$('camera').onchange=e=>addPhotos(e.target.files);
+$('gallery').onchange=e=>addPhotos(e.target.files);
+
+function showPhotos(){
+$('photos').innerHTML='';
+photos.forEach((p,i)=>{
+let box=document.createElement('div');
+box.className='item';
+let img=document.createElement('img');
+img.src=p.data;
+img.className='photo';
+img.style.transform=`rotate(${p.rotation}deg)`;
+let rotate=document.createElement('button');
+rotate.textContent='↻ Rotate';
+rotate.onclick=()=>{
+p.rotation=(p.rotation+90)%360;
+showPhotos();
+};
+let del=document.createElement('button');
+del.textContent='Remove';
+del.onclick=()=>{
+photos.splice(i,1);
+showPhotos();
+};
+box.append(img,rotate,del);
+$('photos').append(box);
+});
+}
+
+async function save(){
+let customer=$('customer').value.trim();
+let phone=$('phone').value.trim();
+
+if(!customer||!phone){
+alert('Enter customer name and phone number');
+return;
+}
+
+let old=editing?(await all()).find(x=>x.id===editing):null;
+
+let data={
+id:editing||uid(),
+customer,
+phone,
+vehicle:$('vehicle').value,
+jobdate:$('jobdate').value,
+complaint:$('complaint').value,
+history:$('history').value,
+status:$('status').value,
+rack:$('rack').value,
+photos:photos,
+created:old?.created||new Date().toLocaleString(),
+updated:new Date().toLocaleString()
+};
+
+await put(data);
+alert('Customer saved successfully');
+clearForm();
+tab('records');
+render();
+}
+
+function clearForm(){
+editing=null;
+['customer','phone','vehicle','complaint','history','rack'].forEach(id=>$(id).value='');
+$('status').value='Received';
+photos=[];
+showPhotos();
+today();
+}
+
+function escapeHTML(v){
+return String(v??'').replace(/[&<>"']/g,c=>({
+'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+}[c]));
+}
+
+async function render(){
+let jobs=await all();
+let q=$('search').value.toLowerCase();
+
+jobs=jobs.filter(j=>
+[j.customer,j.phone,j.vehicle,j.id,j.complaint]
+.join(' ').toLowerCase().includes(q)
+);
+
+jobs.sort((a,b)=>b.updated.localeCompare(a.updated));
+
+$('list').innerHTML='';
+
+if(!jobs.length){
+$('list').textContent='No customer records found';
+return;
+}
+
+jobs.forEach(j=>{
+let box=document.createElement('div');
+box.className='item';
+
+box.innerHTML=`
+<h3>${escapeHTML(j.customer)}</h3>
+<p>📞 ${escapeHTML(j.phone)}</p>
+<p>🏍 ${escapeHTML(j.vehicle)}</p>
+<p>Complaint: ${escapeHTML(j.complaint)}</p>
+<p>Date: ${escapeHTML(j.jobdate)}</p>
+<p class="status ${j.status}">Status: ${j.status}</p>
+<p>Job ID: ${j.id}</p>
+<button data-view="${j.id}">VIEW / QR</button>
+<button data-edit="${j.id}">EDIT</button>
+<button data-wa="${j.id}">🟢 WHATSAPP</button>
+<button class="danger" data-del="${j.id}">DELETE</button>
+`;
+
+$('list').append(box);
+});
+
+$('list').querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>view(b.dataset.view));
+$('list').querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>edit(b.dataset.edit));
+$('list').querySelectorAll('[data-wa]').forEach(b=>b.onclick=()=>whatsapp(b.dataset.wa));
+$('list').querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>deleteJob(b.dataset.del));
+}
+
+async function view(id){
+let j=(await all()).find(x=>x.id===id);
+if(!j)return;
+
+$('dialogContent').innerHTML=`
+<h2>Customer Details</h2>
+<p>Name: ${escapeHTML(j.customer)}</p>
+<p>Phone: ${escapeHTML(j.phone)}</p>
+<p>Vehicle: ${escapeHTML(j.vehicle)}</p>
+<p>Complaint: ${escapeHTML(j.complaint)}</p>
+<p>Repair history: ${escapeHTML(j.history)}</p>
+<p>Status: ${escapeHTML(j.status)}</p>
+<p>Date: ${escapeHTML(j.jobdate)}</p>
+<p>Saved: ${escapeHTML(j.created)}</p>
+<p>Updated: ${escapeHTML(j.updated)}</p>
+<p>QR Job ID: ${j.id}</p>
+<div id="qr"></div>
+`;
+
+j.photos.forEach(p=>{
+let img=document.createElement('img');
+img.src=p.data;
+img.className='photo';
+img.style.transform=`rotate(${p.rotation}deg)`;
+$('dialogContent').append(img);
+});
+
+$('dialog').classList.add('show');
+
+new QRCode($('qr'),{
+text:j.id,
+width:150,
+height:150
+});
+}
+
+function closeDialog(){
+$('dialog').classList.remove('show');
+}
+
+async function edit(id){
+let j=(await all()).find(x=>x.id===id);
+if(!j)return;
+
+editing=id;
+
+['customer','phone','vehicle','jobdate','complaint','history','status','rack']
+.forEach(k=>$(k).value=j[k]||'');
+
+photos=j.photos||[];
+showPhotos();
+tab('entry');
+}
+
+async function deleteJob(id){
+if(confirm('Delete this customer record?')){
+await remove(id);
+render();
+}
+}
+
+async function whatsapp(id){
+let j=(await all()).find(x=>x.id===id);
+if(!j)return;
+
+let msg=`JJ METER SERVICE - METER FAULTS
+
+Customer: ${j.customer}
+Phone: ${j.phone}
+Vehicle: ${j.vehicle}
+Job ID: ${j.id}
+Date: ${j.jobdate}
+Complaint: ${j.complaint}
+Repair history: ${j.history}
+Status: ${j.status}
+Rack: ${j.rack}
+Updated: ${j.updated}`;
+
+window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+}
+
+async function backup(){
+let data={
+app:'METER FAULTS',
+date:new Date().toLocaleString(),
+jobs:await all()
+};
+
+let blob=new Blob([JSON.stringify(data)],{
+type:'application/json'
+});
+
+let url=URL.createObjectURL(blob);
+let a=document.createElement('a');
+a.href=url;
+a.download='METER_FAULTS_BACKUP.json';
+a.click();
+URL.revokeObjectURL(url);
+
+$('backupMessage').textContent='Backup downloaded successfully';
+}
+
+$('restore').onchange=async e=>{
+let f=e.target.files[0];
+if(!f)return;
+
+try{
+let data=JSON.parse(await f.text());
+if(!Array.isArray(data.jobs))throw Error('Invalid backup');
+for(let j of data.jobs)await put(j);
+alert('Backup restored successfully');
+}catch(err){
+alert('Invalid backup file: '+err.message);
+}
+e.target.value='';
+};
+
+async function startScan(){
+if(!window.Html5Qrcode){
+alert('QR scanner library needs internet');
+return;
+}
+
+try{
+scanner=new Html5Qrcode('scanner');
+
+await scanner.start(
+{facingMode:'environment'},
+{fps:10,qrbox:230},
+async text=>{
+await stopScan();
+
+let j=(await all()).find(x=>x.id===text);
+
+$('scanResult').textContent=j?
+'Customer: '+j.customer+' | Phone: '+j.phone+' | Status: '+j.status:
+'QR code: '+text;
+
+if(j)view(j.id);
+},
+()=>{}
+);
+
+}catch(e){
+alert('Camera permission required. Please allow camera access.');
+}
+}
+
+async function stopScan(){
+if(scanner){
+try{
+await scanner.stop();
+scanner.clear();
+}catch(e){}
+scanner=null;
+}
+}
+
+initDB().then(today).catch(e=>alert('Phone storage error: '+e));
+</script>
+</body>
+</html>
